@@ -54,7 +54,7 @@ def zlecenie(data):
         "type": ["forecast"],
         "time": ["00:00"],
         "leadtime_hour": GODZINY,
-        "data_format": "netcdf",
+        "data_format": "netcdf_zip",   # opis zbioru: tylko grib / netcdf_zip; „netcdf" dało sam plik 0–48 h (log 27.11)
         "area": OBSZAR,
     }
 
@@ -67,7 +67,7 @@ def pobierz():
         log("BŁĄD: brak sekretu ADS_KEY w repozytorium (Settings → Secrets and variables → Actions)")
         sys.exit(1)
     klient = cdsapi.Client(url=ADS, key=klucz, quiet=False, progress=False)
-    dzis = dt.datetime.utcnow().date()
+    dzis = dt.datetime.now(dt.timezone.utc).date()
     for data in (dzis.isoformat(), (dzis - dt.timedelta(days=1)).isoformat()):
         z = zlecenie(data)
         log("ZLECENIE:", json.dumps({k: (v if k != "leadtime_hour" else "0…96") for k, v in z.items()}, ensure_ascii=False))
@@ -95,8 +95,12 @@ def otworz(plik):
             nazwy = z.namelist()
             log("ZIP:", nazwy)
             z.extractall("rozpak")
-        pliki = [os.path.join("rozpak", n) for n in nazwy if n.endswith(".nc")]
-        return xr.merge([xr.open_dataset(p) for p in pliki])
+        pliki = sorted(os.path.join("rozpak", n) for n in nazwy if n.endswith(".nc"))
+        zb = [xr.open_dataset(p) for p in pliki]
+        for p, d in zip(pliki, zb):
+            log("  plik", p, "· czas", float(d["time"].values[0]), "…", float(d["time"].values[-1]), "·", d.attrs.get("FORECAST", ""))
+        # części prognozy (0–48 h, 49–96 h) sklejane wzdłuż osi czasu
+        return xr.combine_by_coords(zb, combine_attrs="drop_conflicts")
     return xr.open_dataset(plik)
 
 
@@ -135,7 +139,7 @@ def analiza(ds):
 
 
 def main():
-    log("Start:", dt.datetime.utcnow().isoformat(), "UTC")
+    log("Start:", dt.datetime.now(dt.timezone.utc).isoformat(), "UTC")
     opis_zbioru()
     data, plik = pobierz()
     try:
@@ -144,7 +148,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         log("WYNIK: plik pobrany, ale odczyt nieudany:", repr(e)[:1500])
         sys.exit(1)
-    log("Koniec:", dt.datetime.utcnow().isoformat(), "UTC")
+    log("Koniec:", dt.datetime.now(dt.timezone.utc).isoformat(), "UTC")
 
 
 if __name__ == "__main__":
