@@ -103,9 +103,15 @@ def otworz(plik):
 def analiza(ds):
     log("STRUKTURA:")
     log(ds)
-    zmienne = [v for v in ds.data_vars if ds[v].ndim >= 2]
     lat = "latitude" if "latitude" in ds.coords else "lat"
     lon = "longitude" if "longitude" in ds.coords else "lon"
+    # tylko pola na siatce (np. time_bounds ma wymiary time × nv — log 27.11)
+    zmienne = [v for v in ds.data_vars if lat in ds[v].dims and lon in ds[v].dims]
+    for c in ds.coords:
+        if ds[c].ndim == 1 and ds[c].size > 1 and c not in (lat, lon):
+            w = ds[c].values
+            log("OŚ", c, ":", ds[c].size, "wartości, od", w[0], "do", w[-1])
+    log("ATRYBUTY:", {k: str(v)[:200] for k, v in ds.attrs.items()})
     lons = ds[lon].values
     if lons.max() > 180:  # siatka 0…360
         ds = ds.assign_coords({lon: ((ds[lon] + 180) % 360) - 180}).sortby(lon)
