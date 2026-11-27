@@ -1,8 +1,9 @@
-# Prognoza smogu dla RMWpogoda (RMW 7.217): codziennie pobiera prognozę CAMS (0–48 h), tnie na kafle JSON
+# Prognoza smogu dla RMWpogoda (RMW 7.217, 7.221): codziennie pobiera prognozę CAMS (0–96 h), tnie na kafle JSON
 # i publikuje je na gałąź gh-pages (GitHub Pages: Settings → Pages → Deploy from a branch → gh-pages / root).
-# Dwa terminy: 07:35 UTC (część 0–48 h jest od 06:45 UTC) i 11:35 UTC (powtórka, gdyby rano się nie udało).
+# Dwa terminy: 07:35 UTC (0–48 h; godziny 49–96 przychodzą później — 27.11 jeszcze nie o 09:21, już o 14:12 UTC)
+# i 13:35 UTC (komplet 0–96 h).
 # Publikacja = jeden nadpisywany commit na gh-pages (repo nie rośnie). Błąd = stare kafle zostają; RMWpogoda
-# nie używa danych starszych niż 48 h od startu przebiegu.
+# nie pokazuje godzin, które już minęły.
 # Podtrzymanie (27.11): GitHub wyłącza harmonogram w publicznym repo po 60 dniach bez aktywności. Każdy przebieg
 # woła API „enable workflow” (przesuwa początek 60 dni), a raz w miesiącu commituje datę do PODTRZYMANIE.txt
 # na gałęzi domyślnej (commit = aktywność repo wg dokumentacji GitHuba).
@@ -13,7 +14,7 @@ name: Prognoza
 on:
   schedule:
     - cron: "35 7 * * *"
-    - cron: "35 11 * * *"
+    - cron: "35 13 * * *"
   workflow_dispatch:
 permissions:
   contents: write

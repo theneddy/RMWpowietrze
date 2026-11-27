@@ -2,8 +2,8 @@
 
 Prognoza jakości powietrza (pył PM10 i PM2.5) dla Polski dla aplikacji Run My Way — część pogody (`RMWpogoda`).
 
-**Jak działa (RMW 7.217):** workflow „Prognoza” codziennie (07:35 i 11:35 UTC, także ręcznie) pobiera prognozę
-CAMS European air quality forecasts (model ensemble, start 00 UTC, 0–48 h), tnie siatkę 0,1° nad Polską na kafle
+**Jak działa (RMW 7.217):** workflow „Prognoza” codziennie (07:35 i 13:35 UTC, także ręcznie) pobiera prognozę
+CAMS European air quality forecasts (model ensemble, start 00 UTC, 0–96 h; rano dostępne tylko 0–48 h), tnie siatkę 0,1° nad Polską na kafle
 1° × 1° i publikuje je na gałąź `gh-pages`:
 
 - `https://theneddy.github.io/RMWpowietrze/indeks.json` — start przebiegu, liczba godzin, czas utworzenia, lista kafli;
@@ -14,7 +14,7 @@ CAMS European air quality forecasts (model ensemble, start 00 UTC, 0–48 h), tn
 Odczytuje je pośrednik pogody `RMWpogoda` (repozytorium RMW). Workflow „Test CAMS” (ręczny) został jako narzędzie
 diagnostyczne. Kontekst i decyzje: RMW, `docs/analiza-2026-11-26-prognoza-powietrza.md`.
 
-**Uruchamianie:** harmonogram GitHuba (07:35 i 11:35 UTC) bywa pomijany, więc głównym wyzwalaczem jest strażnik
+**Uruchamianie:** harmonogram GitHuba (07:35 i 13:35 UTC) bywa pomijany, więc głównym wyzwalaczem jest strażnik
 w projekcie Apps Script `RMWpogoda` (`pogStrazSmogu`, co godzinę): gdy `indeks.json` nie ma dzisiejszego przebiegu,
 uruchamia workflow przez API (`workflow_dispatch`, token fine-grained z uprawnieniem Actions: Read and write).
 

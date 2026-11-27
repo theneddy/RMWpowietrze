@@ -1,7 +1,8 @@
 """Prognoza jakości powietrza (PM10, PM2.5) dla Polski → kafle JSON dla RMWpogoda (RMW 7.217).
 
 Uruchamiany przez workflow „Prognoza" (codziennie i ręcznie). Pobiera z Copernicus Atmosphere Data Store prognozę
-CAMS European air quality forecasts (model ensemble, start 00 UTC, 0–48 h — decyzja Marka 27.11: 48 h wystarczy),
+CAMS European air quality forecasts (model ensemble, start 00 UTC, 0–96 h — RMW 7.221; test 27.11: godziny 49–96 są
+dostępne później niż 0–48 — rano zlecenie 0–96 h oddaje bez błędu same 0–48 h, po południu komplet),
 tnie siatkę nad Polską na kafle 1° × 1° i zapisuje do katalogu `publikacja/` (workflow publikuje go na gh-pages).
 
 Format kafla `kafle/<szer>_<dł>.json` (szer/dł = dolny lewy róg w pełnych stopniach, np. 51_17):
@@ -23,7 +24,7 @@ import zipfile
 ADS = "https://ads.atmosphere.copernicus.eu/api"
 ZBIOR = "cams-europe-air-quality-forecasts"
 OBSZAR = [55.0, 14.0, 49.0, 24.2]           # północ, zachód, południe, wschód
-GODZINY = [str(h) for h in range(0, 49)]    # 0–48 h
+GODZINY = [str(h) for h in range(0, 97)]    # 0–96 h (rano przychodzi tylko 0–48 — w indeksie „godzin” = 49 albo 97)
 WYJ = "publikacja"
 ATRYBUCJA = "Generated using Copernicus Atmosphere Monitoring Service information {rok}. Neither the European Commission nor ECMWF is responsible for any use that may be made of the information it contains."
 
