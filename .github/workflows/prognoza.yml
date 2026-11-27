@@ -4,8 +4,11 @@
 # Publikacja = jeden nadpisywany commit na gh-pages (repo nie rośnie). Błąd = stare kafle zostają; RMWpogoda
 # nie używa danych starszych niż 48 h od startu przebiegu.
 # Podtrzymanie (27.11): GitHub wyłącza harmonogram w publicznym repo po 60 dniach bez aktywności. Każdy przebieg
-# z harmonogramu woła API „enable workflow” (przesuwa początek 60 dni), a raz w miesiącu commituje datę do
-# PODTRZYMANIE.txt na gałęzi domyślnej (commit = aktywność repo wg dokumentacji GitHuba).
+# woła API „enable workflow” (przesuwa początek 60 dni), a raz w miesiącu commituje datę do PODTRZYMANIE.txt
+# na gałęzi domyślnej (commit = aktywność repo wg dokumentacji GitHuba).
+# Strażnik (RMW 7.220): harmonogram GitHuba bywa pomijany (27.11: 11:35 UTC nie ruszył) — projekt Apps Script
+# RMWpogoda co godzinę sprawdza indeks.json i, gdy brak dzisiejszego przebiegu, uruchamia ten workflow przez API
+# (workflow_dispatch). Harmonogram poniżej zostaje jako zapas.
 name: Prognoza
 on:
   schedule:
@@ -46,7 +49,7 @@ jobs:
           git commit -q -m "Prognoza $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q -f "https://x-access-token:${TOKEN}@github.com/${REPO}.git" gh-pages
       - name: Podtrzymanie harmonogramu
-        if: always() && github.event_name == 'schedule'   # także gdy pobranie z ADS padło
+        if: always()   # każdy przebieg (harmonogram, strażnik RMWpogoda, ręczny), także gdy pobranie z ADS padło
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}

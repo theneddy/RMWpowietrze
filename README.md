@@ -14,9 +14,13 @@ CAMS European air quality forecasts (model ensemble, start 00 UTC, 0–48 h), tn
 Odczytuje je pośrednik pogody `RMWpogoda` (repozytorium RMW). Workflow „Test CAMS” (ręczny) został jako narzędzie
 diagnostyczne. Kontekst i decyzje: RMW, `docs/analiza-2026-11-26-prognoza-powietrza.md`.
 
+**Uruchamianie:** harmonogram GitHuba (07:35 i 11:35 UTC) bywa pomijany, więc głównym wyzwalaczem jest strażnik
+w projekcie Apps Script `RMWpogoda` (`pogStrazSmogu`, co godzinę): gdy `indeks.json` nie ma dzisiejszego przebiegu,
+uruchamia workflow przez API (`workflow_dispatch`, token fine-grained z uprawnieniem Actions: Read and write).
+
 **Podtrzymanie harmonogramu:** GitHub wyłącza harmonogram w publicznym repo po 60 dniach bez aktywności. Każdy
-przebieg z harmonogramu woła API „enable workflow”, a raz w miesiącu commituje miesiąc do `PODTRZYMANIE.txt`
-(gałąź domyślna). Stan pilnuje codzienne zadanie zaplanowane w Claude (monitor RMWpowietrze).
+przebieg woła API „enable workflow”, a raz w miesiącu commituje miesiąc do `PODTRZYMANIE.txt` (gałąź domyślna).
+Stan pilnuje codzienne zadanie zaplanowane w Claude (monitor RMWpowietrze).
 
 **Ustawienie jednorazowe:** Settings → Pages → Source: „Deploy from a branch” → `gh-pages` / `(root)`
 (gałąź powstaje przy pierwszym udanym przebiegu „Prognoza”).
