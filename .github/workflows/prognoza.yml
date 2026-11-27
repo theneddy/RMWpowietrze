@@ -3,6 +3,9 @@
 # Dwa terminy: 07:35 UTC (część 0–48 h jest od 06:45 UTC) i 11:35 UTC (powtórka, gdyby rano się nie udało).
 # Publikacja = jeden nadpisywany commit na gh-pages (repo nie rośnie). Błąd = stare kafle zostają; RMWpogoda
 # nie używa danych starszych niż 48 h od startu przebiegu.
+# Podtrzymanie (27.11): GitHub wyłącza harmonogram w publicznym repo po 60 dniach bez aktywności. Każdy przebieg
+# z harmonogramu woła API „enable workflow” (przesuwa początek 60 dni), a raz w miesiącu commituje datę do
+# PODTRZYMANIE.txt na gałęzi domyślnej (commit = aktywność repo wg dokumentacji GitHuba).
 name: Prognoza
 on:
   schedule:
@@ -11,6 +14,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: write
 concurrency:
   group: prognoza
   cancel-in-progress: false
@@ -41,3 +45,22 @@ jobs:
           git add -A
           git commit -q -m "Prognoza $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q -f "https://x-access-token:${TOKEN}@github.com/${REPO}.git" gh-pages
+      - name: Podtrzymanie harmonogramu
+        if: always() && github.event_name == 'schedule'   # także gdy pobranie z ADS padło
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api -X PUT "repos/${REPO}/actions/workflows/prognoza.yml/enable" && echo "enable: OK" || echo "enable: błąd (nie przerywa)"
+          cd "$GITHUB_WORKSPACE"
+          MIES=$(date -u +%Y-%m)
+          if [ "$(cat PODTRZYMANIE.txt 2>/dev/null)" != "$MIES" ]; then
+            echo "$MIES" > PODTRZYMANIE.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add PODTRZYMANIE.txt
+            git commit -q -m "Podtrzymanie harmonogramu ${MIES}"
+            git push -q origin "HEAD:${GITHUB_REF_NAME}" && echo "commit podtrzymania: ${MIES}" || echo "commit podtrzymania: błąd (nie przerywa)"
+          else
+            echo "commit podtrzymania: już jest na ${MIES}"
+          fi
