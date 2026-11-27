@@ -1,0 +1,22 @@
+# Test wykonalności (RMW 7.216): czy prognozę CAMS dla Polski da się pobrać i odczytać w GitHub Actions.
+# Uruchamiany TYLKO ręcznie (Actions → „Test CAMS" → Run workflow). Nic nie publikuje.
+name: Test CAMS
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Biblioteki
+        run: pip install "cdsapi>=0.7.4" xarray netCDF4 requests
+      - name: Test pobrania i odczytu
+        env:
+          ADS_KEY: ${{ secrets.ADS_KEY }}
+        run: python skrypty/test_cams.py
