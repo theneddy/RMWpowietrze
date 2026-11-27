@@ -138,6 +138,27 @@ def analiza(ds):
     log("WYNIK: kafel 1°×1° (Wrocław) jako JSON:", len(txt), "B")
 
 
+def test_dalej(data):
+    """Log 27.11: zlecenie 0–96 h oddało jeden plik „[0H_48H]". Osobne zlecenie na 49–96 h rozstrzyga, czy 3. i 4. doba
+    są w ogóle dostępne w tym zbiorze (strona zbioru: od 08:30 UTC)."""
+    import cdsapi
+    import xarray as xr
+    z = zlecenie(data)
+    z["leadtime_hour"] = [str(h) for h in range(49, 97)]
+    t0 = time.time()
+    try:
+        plik = cdsapi.Client(url=ADS, key=os.environ["ADS_KEY"].strip(), quiet=True, progress=False).retrieve(ZBIOR, z, "dalej_" + data + ".dat")
+        plik = plik if isinstance(plik, str) else "dalej_" + data + ".dat"
+        log("WYNIK 49–96 h:", data, "gotowe po", round(time.time() - t0), "s,", os.path.getsize(plik), "B")
+        with zipfile.ZipFile(plik) as zz:
+            zz.extractall("dalej")
+            for n in zz.namelist():
+                d = xr.open_dataset(os.path.join("dalej", n))
+                log("  plik", n, "· czas", float(d["time"].values[0]), "…", float(d["time"].values[-1]), "·", d.attrs.get("FORECAST", ""))
+    except Exception as e:  # noqa: BLE001
+        log("WYNIK 49–96 h:", data, "NIEUDANE po", round(time.time() - t0), "s:", repr(e)[:1500])
+
+
 def main():
     log("Start:", dt.datetime.now(dt.timezone.utc).isoformat(), "UTC")
     opis_zbioru()
@@ -148,6 +169,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         log("WYNIK: plik pobrany, ale odczyt nieudany:", repr(e)[:1500])
         sys.exit(1)
+    test_dalej(data)
     log("Koniec:", dt.datetime.now(dt.timezone.utc).isoformat(), "UTC")
 
 
