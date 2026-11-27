@@ -1,0 +1,43 @@
+# Prognoza smogu dla RMWpogoda (RMW 7.217): codziennie pobiera prognozę CAMS (0–48 h), tnie na kafle JSON
+# i publikuje je na gałąź gh-pages (GitHub Pages: Settings → Pages → Deploy from a branch → gh-pages / root).
+# Dwa terminy: 07:35 UTC (część 0–48 h jest od 06:45 UTC) i 11:35 UTC (powtórka, gdyby rano się nie udało).
+# Publikacja = jeden nadpisywany commit na gh-pages (repo nie rośnie). Błąd = stare kafle zostają; RMWpogoda
+# nie używa danych starszych niż 48 h od startu przebiegu.
+name: Prognoza
+on:
+  schedule:
+    - cron: "35 7 * * *"
+    - cron: "35 11 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: prognoza
+  cancel-in-progress: false
+jobs:
+  prognoza:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Biblioteki
+        run: pip install "cdsapi>=0.7.4" xarray netCDF4 numpy
+      - name: Pobranie i kafle
+        env:
+          ADS_KEY: ${{ secrets.ADS_KEY }}
+        run: python skrypty/prognoza.py
+      - name: Publikacja na gh-pages
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd publikacja
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Prognoza $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${REPO}.git" gh-pages
